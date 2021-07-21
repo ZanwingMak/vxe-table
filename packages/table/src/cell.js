@@ -176,14 +176,14 @@ export const Cell = {
     const cellValue = $table.getCellLabel(row, column)
     const cellPlaceholder = editRender ? editRender.placeholder : ''
     return [
-      h('span', {
+      /* h('span', {
         class: 'vxe-cell--label'
-      }, editRender && eqEmptyValue(cellValue) ? [
+      },  */editRender && eqEmptyValue(cellValue) ? [
         // 如果设置占位符
         h('span', {
           class: 'vxe-cell--placeholder'
         }, UtilTools.formatText(UtilTools.getFuncText(cellPlaceholder), 1))
-      ] : UtilTools.formatText(cellValue, 1))
+      ] : UtilTools.formatText(cellValue, 1)/* ) */
     ]
   },
   renderTreeCell (h, params) {
