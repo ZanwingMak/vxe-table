@@ -17,6 +17,10 @@ const debounceScrollYDuration = browse.msie ? 80 : 20
 const resizableStorageKey = 'VXE_TABLE_CUSTOM_COLUMN_WIDTH'
 const visibleStorageKey = 'VXE_TABLE_CUSTOM_COLUMN_VISIBLE'
 
+let scrollingTimer = null
+let fastScrollX = false
+let lastScrollLeftX = 0
+
 /**
  * 生成行的唯一主键
  */
@@ -3822,6 +3826,13 @@ const Methods = {
    * 横向 X 可视渲染事件处理
    */
   triggerScrollXEvent () {
+    const scrollXLoad = this.scrollXLoad
+    if (scrollXLoad && Math.abs(this.getScroll().scrollLeft - lastScrollLeftX) >= 1000) {
+      fastScrollX = true
+    } else {
+      fastScrollX = false
+    }
+    lastScrollLeftX = this.getScroll().scrollLeft
     this.loadScrollXData()
   },
   loadScrollXData () {
@@ -3918,8 +3929,90 @@ const Methods = {
     this.tableColumn = scrollXLoad ? visibleColumn.slice(scrollXStore.startIndex, scrollXStore.endIndex) : visibleColumn.slice(0)
   },
   updateScrollXData () {
-    this.handleTableColumn()
-    this.updateScrollXSpace()
+    if (!fastScrollX) {
+      this.handleTableColumn()
+      this.updateScrollXSpace()
+    } else {
+      const scrollXLoad = this.scrollXLoad
+      const visibleColumn = this.visibleColumn
+      const scrollXStore = this.scrollXStore
+      const _ = Object.assign([], visibleColumn.slice(scrollXStore.startIndex, scrollXStore.endIndex))
+      if (scrollXLoad) {
+        this.tableColumn = _
+      } else {
+        this.tableColumn = visibleColumn.slice(0)
+      }
+      this._updateScrollXSpace()
+      try {
+        const $refs = this.$refs
+        const tableBody = $refs.tableBody
+        const tableBodyElem = tableBody ? tableBody.$el : null
+        const bodyElem = tableBodyElem.querySelector('.vxe-table--body')
+        const tableFooter = $refs.tableFooter
+        const tableFooterElem = tableFooter ? tableFooter.$el : null
+        const footerElem = tableFooterElem.querySelector('.vxe-table--footer')
+        const cellElems = bodyElem.querySelectorAll('vxe-cell')
+        bodyElem.style.display = 'none'
+        // footerElem.style.visibility = 'hidden'
+        footerElem.style.display = 'none'
+        cellElems.forEach(item => {
+          item.innerText = ''
+        })
+        // if(scrollingTimer !== null) {
+        clearTimeout(scrollingTimer)
+        scrollingTimer = null
+        // }
+        scrollingTimer = setTimeout(() => {
+          // _.forEach(item => {
+          //   item.property = item.property.split('|').filter(item=>item!=='').toString()
+          // })
+          // console.log('loaddddddd')
+          bodyElem.style.display = 'block'
+          // footerElem.style.visibility = 'visible'
+          footerElem.style.display = 'block'
+          this.handleTableColumn()
+          this.updateScrollXSpace()
+          fastScrollX = false
+        }, 300)
+      } catch (e) {
+      }
+    }
+  },
+  // 更新横向 X 可视渲染上下剩余空间大小 (改)
+  _updateScrollXSpace: function _updateScrollXSpace () {
+    const { $refs, elemStore, visibleColumn, scrollXStore, scrollXLoad, tableWidth, scrollbarWidth } = this
+    const { tableHeader, tableBody, tableFooter } = $refs
+    const tableBodyElem = tableBody ? tableBody.$el : null
+    if (tableBodyElem) {
+      const tableHeaderElem = tableHeader ? tableHeader.$el : null
+      const tableFooterElem = tableFooter ? tableFooter.$el : null
+      const headerElem = tableHeaderElem ? tableHeaderElem.querySelector('.vxe-table--header') : null
+      const bodyElem = tableBodyElem.querySelector('.vxe-table--body')
+      const footerElem = tableFooterElem ? tableFooterElem.querySelector('.vxe-table--footer') : null
+      const leftSpaceWidth = visibleColumn.slice(0, scrollXStore.startIndex).reduce((previous, column) => previous + column.renderWidth, 0)
+      let marginLeft = ''
+      if (scrollXLoad) {
+        marginLeft = `${leftSpaceWidth}px`
+      }
+      if (headerElem) {
+        headerElem.style.marginLeft = marginLeft
+      }
+      // bodyElem.style.marginLeft = marginLeft
+      // if (footerElem) {
+      //   footerElem.style.marginLeft = marginLeft
+      // }
+      const containerList = ['main']
+      containerList.forEach(name => {
+        const layoutList = ['header', 'body', 'footer']
+        layoutList.forEach(layout => {
+          const xSpaceElem = elemStore[`${name}-${layout}-xSpace`]
+          if (xSpaceElem) {
+            xSpaceElem.style.width = scrollXLoad ? `${tableWidth + (layout === 'header' ? scrollbarWidth : 0)}px` : ''
+          }
+        })
+      })
+      this.$nextTick(this.updateStyle)
+    }
   },
   // 更新横向 X 可视渲染上下剩余空间大小
   updateScrollXSpace () {
