@@ -3950,11 +3950,14 @@ const Methods = {
         const bodyElem = tableBodyElem.querySelector('.vxe-table--body')
         const tableFooter = $refs.tableFooter
         const tableFooterElem = tableFooter ? tableFooter.$el : null
+        const footerXspaceElem = tableFooterElem.querySelector('.vxe-body--x-space');
         const footerElem = tableFooterElem.querySelector('.vxe-table--footer')
         const cellElems = bodyElem.querySelectorAll('vxe-cell')
         bodyElem.style.display = 'none'
         // footerElem.style.visibility = 'hidden'
         footerElem.style.display = 'none'
+        footerXspaceElem.style.marginTop = '25px'
+        footerXspaceElem.style.border = 'solid 1px #E8EAEC'
         cellElems.forEach(item => {
           item.innerText = ''
         })
@@ -3970,6 +3973,8 @@ const Methods = {
           bodyElem.style.display = 'block'
           // footerElem.style.visibility = 'visible'
           footerElem.style.display = 'block'
+          footerXspaceElem.style.marginTop = 'unset'
+          footerXspaceElem.style.border = 'unset'
           this.handleTableColumn()
           this.updateScrollXSpace()
           fastScrollX = false
