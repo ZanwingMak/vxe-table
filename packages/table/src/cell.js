@@ -163,6 +163,10 @@ export const Cell = {
     const { $table, row, column } = params
     const { slots, editRender, cellRender } = column
     const renderOpts = editRender || cellRender
+    const _$table$sortOpts = $table.sortOpts
+    // const showIcon = _$table$sortOpts.showIcon
+    const iconAsc = _$table$sortOpts.iconAsc
+    const iconDesc = _$table$sortOpts.iconDesc
     if (slots && slots.default) {
       return $table.callSlot(slots.default, params, h)
     }
@@ -176,14 +180,41 @@ export const Cell = {
     const cellValue = $table.getCellLabel(row, column)
     const cellPlaceholder = editRender ? editRender.placeholder : ''
     return [
-      /* h('span', {
+      h('span', {
         class: 'vxe-cell--label'
-      },  */editRender && eqEmptyValue(cellValue) ? [
+      }, editRender && eqEmptyValue(cellValue) ? [
         // 如果设置占位符
         h('span', {
           class: 'vxe-cell--placeholder'
         }, UtilTools.formatText(UtilTools.getFuncText(cellPlaceholder), 1))
-      ] : UtilTools.formatText(cellValue, 1)/* ) */
+      ] : UtilTools.formatText(cellValue, 1)
+      ), row.ableSort && !row.unableSortProps.includes(column.property) && cellValue ? [h('span', {
+        class: 'vxe-cell--sort'
+      }, [h('i', {
+        class: ['vxe-sort--asc-btn', iconAsc || GlobalConfig.icon.TABLE_SORT_ASC, {
+          'sort--active': row.sort === 'asc' && row.sortProperty === column.property
+        }],
+        attrs: {
+          title: GlobalConfig.i18n('vxe.table.sortAsc')
+        },
+        on: {
+          // click (evnt) {
+          // $table.triggerSortEvent(evnt, column, 'asc')
+          // }
+        }
+      }), h('i', {
+        class: ['vxe-sort--desc-btn', iconDesc || GlobalConfig.icon.TABLE_SORT_DESC, {
+          'sort--active': row.sort === 'desc' && row.sortProperty === column.property
+        }],
+        attrs: {
+          title: GlobalConfig.i18n('vxe.table.sortDesc')
+        },
+        on: {
+          // click (evnt) {
+          // $table.triggerSortEvent(evnt, column, 'desc')
+          // }
+        }
+      })])] : []
     ]
   },
   renderTreeCell (h, params) {
