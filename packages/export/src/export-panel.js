@@ -51,8 +51,8 @@ export default {
     }
   },
   render (h) {
-    this.storeData.columns = this.realColumns
-    this.storeData.hasColgroup = this.isGroupTable
+    this.storeData.columns = this.defaultOptions.realColumns
+    this.storeData.hasColgroup = this.defaultOptions.isGroupTable
     const { _e, checkedAll, isAll, isIndeterminate, showSheet, supportMerge, supportStyle, defaultOptions, storeData } = this
     const { hasTree, hasMerge, isPrint, hasColgroup } = storeData
     const { isHeader } = defaultOptions
