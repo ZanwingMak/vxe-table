@@ -203,10 +203,10 @@ function getBooleanValue (cellValue) {
 }
 
 function getHeaderTitle (opts, column) {
-  return (opts.original ? column.property : column.getTitle()) || ''
+  return (opts.original ? column.property : column.title) || ''
 }
 
-function getFooterCellValue ($xetable, opts, items, column) {
+function getFooterCellValue ($xetable, opts, items, column, index) {
   const renderOpts = column.editRender || column.cellRender
   let exportLabelMethod = column.footerExportMethod
   if (!exportLabelMethod && renderOpts && renderOpts.name) {
@@ -216,7 +216,7 @@ function getFooterCellValue ($xetable, opts, items, column) {
     }
   }
   const _columnIndex = $xetable.getVTColumnIndex(column)
-  const cellValue = exportLabelMethod ? exportLabelMethod({ $table: $xetable, items, itemIndex: _columnIndex, _columnIndex, column, options: opts }) : XEUtils.toValueString(items[_columnIndex])
+  const cellValue = exportLabelMethod ? exportLabelMethod({ $table: $xetable, items, itemIndex: _columnIndex, _columnIndex, column, options: opts }) : XEUtils.toValueString(items[index])
   return cellValue
 }
 
@@ -258,13 +258,13 @@ function toCsv ($xetable, opts, columns, datas) {
     content += columns.map(column => toTxtCellLabel(getHeaderTitle(opts, column))).join(',') + enterSymbol
   }
   datas.forEach(row => {
-    content += columns.map(column => toTxtCellLabel(getCsvCellTypeLabel(column, row[column.id]))).join(',') + enterSymbol
+    content += columns.map(column => toTxtCellLabel(getCsvCellTypeLabel(column, row._row[column.property]))).join(',') + enterSymbol
   })
   if (opts.isFooter) {
     const footerTableData = $xetable.footerTableData
     const footers = getFooterData(opts, footerTableData)
     footers.forEach(rows => {
-      content += columns.map(column => toTxtCellLabel(getFooterCellValue($xetable, opts, rows, column))).join(',') + enterSymbol
+      content += columns.map((column, index) => toTxtCellLabel(getFooterCellValue($xetable, opts, rows, column, index))).join(',') + enterSymbol
     })
   }
   return content
@@ -276,13 +276,13 @@ function toTxt ($xetable, opts, columns, datas) {
     content += columns.map(column => toTxtCellLabel(getHeaderTitle(opts, column))).join('\t') + enterSymbol
   }
   datas.forEach(row => {
-    content += columns.map(column => toTxtCellLabel(row[column.id])).join('\t') + enterSymbol
+    content += columns.map(column => toTxtCellLabel(row._row[column.property])).join('\t') + enterSymbol
   })
   if (opts.isFooter) {
     const footerTableData = $xetable.footerTableData
     const footers = getFooterData(opts, footerTableData)
     footers.forEach(rows => {
-      content += columns.map(column => toTxtCellLabel(getFooterCellValue($xetable, opts, rows, column))).join(',') + enterSymbol
+      content += columns.map((column, index) => toTxtCellLabel(getFooterCellValue($xetable, opts, rows, column, index))).join(',') + enterSymbol
     })
   }
   return content
@@ -385,7 +385,7 @@ function toHtml ($xetable, opts, columns, datas) {
           '<tr>' + columns.map(column => {
             const cellAlign = column.align || allAlign
             const classNames = hasEllipsis($xetable, column, 'showOverflow', allColumnOverflow) ? ['col--ellipsis'] : []
-            const cellValue = item[column.id]
+            const cellValue = item._row[column.property]
             if (cellAlign) {
               classNames.push(`col--${cellAlign}`)
             }
@@ -417,7 +417,7 @@ function toHtml ($xetable, opts, columns, datas) {
           '<tr>' + columns.map(column => {
             const cellAlign = column.align || allAlign
             const classNames = hasEllipsis($xetable, column, 'showOverflow', allColumnOverflow) ? ['col--ellipsis'] : []
-            const cellValue = item[column.id]
+            const cellValue = item._row[column.property]
             let rowSpan = 1
             let colSpan = 1
             if (isMerge && mergeList.length) {
@@ -459,10 +459,10 @@ function toHtml ($xetable, opts, columns, datas) {
       tables.push('<tfoot>')
       footers.forEach(rows => {
         tables.push(
-          `<tr>${columns.map(column => {
+          `<tr>${columns.map((column, index) => {
             const footAlign = column.footerAlign || column.align || allFooterAlign || allAlign
             const classNames = hasEllipsis($xetable, column, 'showOverflow', allColumnOverflow) ? ['col--ellipsis'] : []
-            const cellValue = getFooterCellValue($xetable, opts, rows, column)
+            const cellValue = getFooterCellValue($xetable, opts, rows, column, index)
             if (footAlign) {
               classNames.push(`col--${footAlign}`)
             }
@@ -503,13 +503,13 @@ function toXML ($xetable, opts, columns, datas) {
     xml += `<Row>${columns.map(column => `<Cell><Data ss:Type="String">${getHeaderTitle(opts, column)}</Data></Cell>`).join('')}</Row>`
   }
   datas.forEach(row => {
-    xml += '<Row>' + columns.map(column => `<Cell><Data ss:Type="String">${row[column.id]}</Data></Cell>`).join('') + '</Row>'
+    xml += '<Row>' + columns.map(column => `<Cell><Data ss:Type="String">${row._row[column.property]}</Data></Cell>`).join('') + '</Row>'
   })
   if (opts.isFooter) {
     const footerTableData = $xetable.footerTableData
     const footers = getFooterData(opts, footerTableData)
     footers.forEach(rows => {
-      xml += `<Row>${columns.map(column => `<Cell><Data ss:Type="String">${getFooterCellValue($xetable, opts, rows, column)}</Data></Cell>`).join('')}</Row>`
+      xml += `<Row>${columns.map((column, index) => `<Cell><Data ss:Type="String">${getFooterCellValue($xetable, opts, rows, column, index)}</Data></Cell>`).join('')}</Row>`
     })
   }
   return `${xml}</Table></Worksheet></Workbook>`
@@ -580,7 +580,9 @@ function clearColumnConvert (columns) {
 }
 
 function handleExport ($xetable, opts) {
-  const { remote, columns, colgroups, exportMethod, afterExportMethod } = opts
+  const { remote, /* columns, colgroups, */ exportMethod, afterExportMethod } = opts
+  const columns = opts.lastRowColums
+  const colgroups = opts.realColGroups
   return new Promise(resolve => {
     if (remote) {
       const params = { options: opts, $table: $xetable, $grid: $xetable.$xegrid }
@@ -1119,7 +1121,10 @@ export default {
      * @param {Object} options 参数
      */
     _exportData (options) {
-      const { $xegrid, isGroup, tableGroupColumn, tableFullColumn, afterFullData, treeConfig, treeOpts, exportOpts } = this
+      const { $xegrid, /* isGroup, tableGroupColumn, tableFullColumn, */ afterFullData, treeConfig, treeOpts, exportOpts } = this
+      const isGroup = options.isGroupTable
+      const tableGroupColumn = options.realColGroups
+      const tableFullColumn = options.lastRowColums
       const opts = Object.assign({
         // filename: '',
         // sheetName: '',
@@ -1144,7 +1149,8 @@ export default {
       }, exportOpts, {
         print: false
       }, options)
-      const { type, mode, columns, original, beforeExportMethod } = opts
+      const { type, mode, /* columns, */ original, beforeExportMethod } = opts
+      const columns = opts.lastRowColums
       let groups = []
       const customCols = columns && columns.length ? columns : null
       // 如果设置源数据，则默认导出设置了字段的列

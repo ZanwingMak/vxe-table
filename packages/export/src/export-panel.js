@@ -11,7 +11,11 @@ export default {
   name: 'VxeExportPanel',
   props: {
     defaultOptions: Object,
-    storeData: Object
+    storeData: Object,
+    realColumns: [],
+    isGroupTable: Boolean,
+    realColGroups: [],
+    lastRowColums: []
   },
   components: {
     VxeModal,
@@ -47,12 +51,14 @@ export default {
     }
   },
   render (h) {
+    this.storeData.columns = this.realColumns
+    this.storeData.hasColgroup = this.isGroupTable
     const { _e, checkedAll, isAll, isIndeterminate, showSheet, supportMerge, supportStyle, defaultOptions, storeData } = this
     const { hasTree, hasMerge, isPrint, hasColgroup } = storeData
     const { isHeader } = defaultOptions
     const cols = []
     XEUtils.eachTree(storeData.columns, column => {
-      const colTitle = UtilTools.formatText(column.getTitle(), 1)
+      const colTitle = UtilTools.formatText(column.title, 1)
       const isColGroup = column.children && column.children.length
       cols.push(
         h('li', {
