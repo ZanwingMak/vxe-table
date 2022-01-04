@@ -169,7 +169,8 @@ export default {
                   'is--line': !border || border === 'none'
                 }],
                 on: {
-                  mousedown: evnt => this.resizeMousedown(evnt, params)
+                  mousedown: evnt => this.resizeMousedown(evnt, params),
+                  touchstart: evnt => this.resizeTouchstart(evnt, params)
                 }
               }) : null
             ])
@@ -269,6 +270,89 @@ export default {
           $xetable.saveCustomResizable()
           $xetable.updateCellAreas()
           $xetable.emitEvent('resizable-change', params, evnt)
+        })
+        DomTools.removeClass($xetable.$el, 'drag--resize')
+      }
+      updateEvent(evnt)
+      $xetable.closeMenu()
+    },
+    resizeTouchstart (evnt, params) {
+      const { column } = params
+      const { $parent: $xetable, $el, fixedType } = this
+      const { tableBody, leftContainer, rightContainer, resizeBar: resizeBarElem } = $xetable.$refs
+      const { target: dragBtnElem, clientX: dragClientX } = evnt.changedTouches[0]
+      const cell = params.cell = dragBtnElem.parentNode
+      let dragLeft = 0
+      const tableBodyElem = tableBody.$el
+      const pos = DomTools.getOffsetPos(dragBtnElem, $el)
+      const dragBtnWidth = dragBtnElem.clientWidth
+      const dragBtnOffsetWidth = Math.floor(dragBtnWidth / 2)
+      const minInterval = getColMinWidth(params) - dragBtnOffsetWidth // 列之间的最小间距
+      let dragMinLeft = pos.left - cell.clientWidth + dragBtnWidth + minInterval
+      let dragPosLeft = pos.left + dragBtnOffsetWidth
+      const domTouchmove = document.ontouchmove
+      const domTouchend = document.ontouchend
+      const isLeftFixed = fixedType === 'left'
+      const isRightFixed = fixedType === 'right'
+
+      // 计算左右侧固定列偏移量
+      let fixedOffsetWidth = 0
+      if (isLeftFixed || isRightFixed) {
+        const siblingProp = isLeftFixed ? 'nextElementSibling' : 'previousElementSibling'
+        let tempCellElem = cell[siblingProp]
+        while (tempCellElem) {
+          if (DomTools.hasClass(tempCellElem, 'fixed--hidden')) {
+            break
+          } else if (!DomTools.hasClass(tempCellElem, 'col--group')) {
+            fixedOffsetWidth += tempCellElem.offsetWidth
+          }
+          tempCellElem = tempCellElem[siblingProp]
+        }
+        if (isRightFixed && rightContainer) {
+          dragPosLeft = rightContainer.offsetLeft + fixedOffsetWidth
+        }
+      }
+
+      // 处理拖动事件
+      const updateEvent = function (evnt) {
+        try {
+          evnt.stopPropagation()
+          // evnt.preventDefault()
+        } catch (err) {}
+        const offsetX = evnt.changedTouches[0].clientX - dragClientX
+        let left = dragPosLeft + offsetX
+        const scrollLeft = fixedType ? 0 : tableBodyElem.scrollLeft
+        if (isLeftFixed) {
+          // 左固定列（不允许超过右侧固定列、不允许超过右边距）
+          left = Math.min(left, (rightContainer ? rightContainer.offsetLeft : tableBodyElem.clientWidth) - fixedOffsetWidth - minInterval)
+        } else if (isRightFixed) {
+          // 右侧固定列（不允许超过左侧固定列、不允许超过左边距）
+          dragMinLeft = (leftContainer ? leftContainer.clientWidth : 0) + fixedOffsetWidth + minInterval
+          left = Math.min(left, dragPosLeft + cell.clientWidth - minInterval)
+        } else {
+          dragMinLeft = Math.max(tableBodyElem.scrollLeft, dragMinLeft)
+          // left = Math.min(left, tableBodyElem.clientWidth + tableBodyElem.scrollLeft - 40)
+        }
+        dragLeft = Math.max(left, dragMinLeft)
+        resizeBarElem.style.left = `${dragLeft - scrollLeft}px`
+      }
+
+      $xetable._isResize = true
+      DomTools.addClass($xetable.$el, 'drag--resize')
+      resizeBarElem.style.display = 'block'
+      document.ontouchmove = updateEvent
+      document.ontouchend = function (evnt) {
+        document.ontouchmove = domTouchmove
+        document.ontouchend = domTouchend
+        column.resizeWidth = Math.floor(column.renderWidth + (isRightFixed ? dragPosLeft - dragLeft : dragLeft - dragPosLeft))
+        resizeBarElem.style.display = 'none'
+        $xetable._isResize = false
+        $xetable._lastResizeTime = Date.now()
+        $xetable.analyColumnWidth()
+        $xetable.recalculate(true).then(() => {
+          $xetable.saveCustomResizable()
+          $xetable.updateCellAreas()
+          $xetable.emitEvent('resizable-change', params, evnt.changedTouches[0])
         })
         DomTools.removeClass($xetable.$el, 'drag--resize')
       }
