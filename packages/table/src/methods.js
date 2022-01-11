@@ -3827,7 +3827,7 @@ const Methods = {
    */
   triggerScrollXEvent () {
     const scrollXLoad = this.scrollXLoad
-    if (scrollXLoad && Math.abs(this.getScroll().scrollLeft - lastScrollLeftX) >= 1000) {
+    if (scrollXLoad && Math.abs(this.getScroll().scrollLeft - lastScrollLeftX) >= 500) { // 1000
       fastScrollX = true
     } else {
       fastScrollX = false
@@ -3950,9 +3950,10 @@ const Methods = {
         const bodyElem = tableBodyElem.querySelector('.vxe-table--body')
         const tableFooter = $refs.tableFooter
         const tableFooterElem = tableFooter ? tableFooter.$el : null
-        const footerXspaceElem = tableFooterElem.querySelector('.vxe-body--x-space');
+        const footerXspaceElem = tableFooterElem.querySelector('.vxe-body--x-space')
         const footerElem = tableFooterElem.querySelector('.vxe-table--footer')
         const cellElems = bodyElem.querySelectorAll('vxe-cell')
+        // var cellLabelElems = bodyElem.querySelectorAll('vxe-cell--label')
         bodyElem.style.display = 'none'
         // footerElem.style.visibility = 'hidden'
         footerElem.style.display = 'none'
@@ -3978,7 +3979,7 @@ const Methods = {
           this.handleTableColumn()
           this.updateScrollXSpace()
           fastScrollX = false
-        }, 300)
+        }, 50) // 300
       } catch (e) {
       }
     }
