@@ -180,7 +180,8 @@ export const Cell = {
     const cellValue = $table.getCellLabel(row, column)
     const cellPlaceholder = editRender ? editRender.placeholder : ''
     return [
-      h('span', {
+      cellValue,
+      /* h('span', {
         class: 'vxe-cell--label'
       }, editRender && eqEmptyValue(cellValue) ? [
         // 如果设置占位符
@@ -188,7 +189,7 @@ export const Cell = {
           class: 'vxe-cell--placeholder'
         }, UtilTools.formatText(UtilTools.getFuncText(cellPlaceholder), 1))
       ] : UtilTools.formatText(cellValue, 1)
-      ), row.ableSort && !row.unableSortProps.includes(column.property) && cellValue ? [h('span', {
+      ),  */row.ableSort && !row.unableSortProps.includes(column.property) && cellValue ? [h('span', {
         class: 'vxe-cell--sort'
       }, [h('i', {
         class: ['vxe-sort--asc-btn', iconAsc || GlobalConfig.icon.TABLE_SORT_ASC, {

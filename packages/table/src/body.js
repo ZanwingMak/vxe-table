@@ -205,19 +205,19 @@ function renderColumn (h, _vm, $xetable, $seq, seq, rowid, fixedType, rowLevel, 
     )
   } else {
     // 渲染单元格
-    tdVNs.push(
-      ...renderLine(h, _vm, $xetable, rowLevel, items, params),
-      h('div', {
-        class: ['vxe-cell', {
-          'c--title': showTitle,
-          'c--tooltip': showTooltip,
-          'c--ellipsis': showEllipsis
-        }],
-        attrs: {
-          title: showTitle ? $xetable.getCellLabel(row, column) : null
-        }
-      }, column.renderCell(h, params))
-    )
+    // tdVNs.push(
+    //   ...renderLine(h, _vm, $xetable, rowLevel, items, params),
+    //   h('div', {
+    //     class: ['vxe-cell', {
+    //       'c--title': showTitle,
+    //       'c--tooltip': showTooltip,
+    //       'c--ellipsis': showEllipsis
+    //     }],
+    //     attrs: {
+    //       title: showTitle ? $xetable.getCellLabel(row, column) : null
+    //     }
+    //   }, column.renderCell(h, params))
+    // )
     if (showValidTip && hasValidError) {
       tdVNs.push(
         h('div', {
@@ -251,7 +251,7 @@ function renderColumn (h, _vm, $xetable, $seq, seq, rowid, fixedType, rowLevel, 
     attrs,
     style: cellStyle ? (XEUtils.isFunction(cellStyle) ? cellStyle(params) : cellStyle) : null,
     on: tdOns
-  }, tdVNs)
+  }, /* tdVNs */ column.renderCell(h, params))
 }
 
 function renderRows (h, _vm, $xetable, $seq, rowLevel, fixedType, tableData, tableColumn) {

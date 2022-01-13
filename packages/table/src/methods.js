@@ -2425,8 +2425,8 @@ const Methods = {
     const tooltip = $refs.tooltip
     const customContent = contentMethod ? contentMethod(params) : null
     const useCustom = contentMethod && !XEUtils.eqNull(customContent)
-    const content = useCustom ? customContent : (column.type === 'html' ? overflowElem.innerText : overflowElem.textContent).trim()
-    const isCellOverflow = overflowElem.scrollWidth > overflowElem.clientWidth
+    const content = useCustom ? customContent : overflowElem ? (column.type === 'html' ? overflowElem.innerText : overflowElem.textContent).trim() : ''
+    const isCellOverflow = overflowElem ? overflowElem.scrollWidth > overflowElem.clientWidth : false
     if (content && (showAll || enabled || useCustom || isCellOverflow)) {
       Object.assign(tooltipStore, {
         row,
@@ -2434,7 +2434,7 @@ const Methods = {
         visible: true
       })
       if (tooltip) {
-        tooltip.open(isCellOverflow ? overflowElem : (tipElem || overflowElem), UtilTools.formatText(content))
+        tooltip.open(isCellOverflow ? overflowElem : ((tipElem || overflowElem), UtilTools.formatText(content)) || '')
       }
     }
     return this.$nextTick()
@@ -3827,7 +3827,7 @@ const Methods = {
    */
   triggerScrollXEvent () {
     const scrollXLoad = this.scrollXLoad
-    if (scrollXLoad && Math.abs(this.getScroll().scrollLeft - lastScrollLeftX) >= 500) { // 1000
+    if (scrollXLoad && Math.abs(this.getScroll().scrollLeft - lastScrollLeftX) >= 600) { // 1000
       fastScrollX = true
     } else {
       fastScrollX = false
