@@ -2434,7 +2434,7 @@ const Methods = {
         visible: true
       })
       if (tooltip) {
-        tooltip.open(isCellOverflow ? overflowElem : ((tipElem || overflowElem), UtilTools.formatText(content)) || '')
+        tooltip.open(isCellOverflow ? overflowElem : (tipElem || overflowElem), UtilTools.formatText(content))
       }
     }
     return this.$nextTick()
